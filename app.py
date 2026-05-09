@@ -472,26 +472,6 @@ def requires_permission(feature, level='any'):
 
 
 
-@app.before_request
-def enforce_setup():
-    # Allow static resources to load
-    if request.path.startswith('/static'):
-        return None
-        
-    # Allow setup APIs and pages
-    whitelist = ['/setup-admin', '/api/setup-admin']
-    if request.path in whitelist:
-        return None
-        
-    # Check if we are running with insecure default credentials
-    config = load_security_config()
-    default_hash = hashlib.sha256('admin'.encode()).hexdigest()
-    
-    if config['password_hash'] == default_hash:
-        # Force setup
-        if request.path.startswith('/api'):
-             return jsonify({'error': 'Setup required', 'redirect': '/setup-admin'}), 403
-        return redirect('/setup-admin')
 
 def get_size(bytes, suffix="B"):
     """Scale bytes to its proper format"""
@@ -504,6 +484,15 @@ def get_size(bytes, suffix="B"):
 # Auth Routes
 @app.route('/login', methods=['GET'])
 def login_page():
+    # If setup hasn't been completed, force setup wizard
+    try:
+        config = load_security_config()
+        default_hash = hashlib.sha256('admin'.encode()).hexdigest()
+        if config['password_hash'] == default_hash:
+            return redirect('/setup-admin')
+    except Exception:
+        return redirect('/setup-admin')
+
     if session.get('logged_in'):
         return redirect(url_for('dashboard'))
     return render_template('login.html')
@@ -631,9 +620,16 @@ def logout_api():
     audit_log('LOGOUT', f"User {user} logged out")
     return jsonify({'success': True})
 
-# Public Monitoring Page (no auth required)
+# Public Monitoring Page - redirects to setup on first install
 @app.route('/')
 def monitoring_page():
+    try:
+        config = load_security_config()
+        default_hash = hashlib.sha256('admin'.encode()).hexdigest()
+        if config['password_hash'] == default_hash:
+            return redirect('/setup-admin')
+    except Exception:
+        return redirect('/setup-admin')
     return render_template('monitoring.html')
 
 # Admin Dashboard (requires login)
