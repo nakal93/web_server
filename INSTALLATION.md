@@ -66,12 +66,11 @@ Jika instalasi sukses, Anda akan melihat pesan seperti:
 
 ---
 
-## 4. Aktivasi Lisensi & Login Pertama
+## 4. Login Pertama (Setup Wizard)
 1. **Akses Dashboard**: Buka *browser* pada perangkat apa saja yang terhubung di jaringan yang sama, lalu masukkan IP Server Anda (misal `http://192.168.1.10`).
-2. **Hardware ID**: Pada akses pertama, layar akan terkunci dengan pesan **Activation Required**. Salin **Hardware ID** Anda yang tertampil di layar.
-3. **Mendapatkan License Key**: Hubungi pengelola atau Bot Aktivasi untuk menukarkan Hardware ID Anda dengan *License Key*.
-4. **Setup Wizard**: Setelah lisensi dimasukkan dan valid, Anda akan diarahkan ke *Setup Wizard*. Buat **Password Admin** baru Anda.
-5. **Login**: Masuk menggunakan password admin tersebut. Dashboard kini siap digunakan!
+2. **Setup Wizard**: Pada akses pertama, Anda akan diarahkan ke halaman Setup Wizard.
+3. **Buat Password**: Masukkan dan buat **Password Admin** baru yang akan digunakan untuk mengelola dashboard Anda ke depannya.
+4. **Login**: Setelah password berhasil dibuat, masuk (login) menggunakan sandi tersebut. Dashboard Anda kini sudah siap digunakan!
 
 ---
 
