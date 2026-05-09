@@ -74,29 +74,67 @@ Jika instalasi sukses, Anda akan melihat pesan seperti:
 
 ---
 
-## 5. FAQ & Troubleshooting
+## 5. FAQ & Troubleshooting (Kendala & Solusi)
 
-**Tanya: Server saya menggunakan CasaOS, apakah akan bermasalah?**
-**Jawab:** Tidak. Script installer otomatis mendeteksi CasaOS dan akan memindahkan port CasaOS dari `80` menjadi `9999`. Anda dapat mengakses CasaOS kembali di `http://IP-SERVER:9999`, sementara Eka Dashboard menggunakan port `80`.
+Berikut adalah 15 daftar kendala yang sering terjadi beserta solusinya:
 
-**Tanya: Bagaimana cara mengganti Port Eka Dashboard agar tidak menggunakan Port 80?**
-**Jawab:**
+**1. Server menggunakan CasaOS, apakah akan bermasalah?**
+Tidak. Script installer otomatis mendeteksi CasaOS dan akan memindahkan port CasaOS dari `80` menjadi `9999`. Anda dapat mengakses CasaOS kembali di `http://IP-SERVER:9999`, sementara Eka Dashboard menggunakan port `80`.
+
+**2. Bagaimana cara mengganti Port Eka Dashboard agar tidak menggunakan Port 80?**
 1. Masuk ke direktori instalasi: `cd /root/eka_dashboard`
-2. Buka dan edit file `docker-compose.yml`:
-   ```bash
-   nano docker-compose.yml
-   ```
-3. Ubah bagian `ports:` dari `- "80:5000"` menjadi port yang diinginkan (misal `- "8080:5000"`).
+2. Buka file konfigurasi: `nano docker-compose.yml`
+3. Ubah bagian `ports:` dari `- "80:5000"` menjadi `- "8080:5000"` (atau port lain).
 4. Simpan perubahan (Ctrl+X, ketik Y, lalu Enter).
-5. Terapkan perubahan: `docker compose up -d`
-6. Akses dashboard di port baru: `http://IP-SERVER:8080`
+5. Terapkan: `sudo docker compose up -d`
+6. Akses di: `http://IP-SERVER:8080`
 
-**Tanya: Saya lupa Password Admin, bagaimana cara me-resetnya?**
-**Jawab:**
-Hapus file konfigurasi keamanan, lalu *restart container*.
+**3. Saya lupa Password Admin, bagaimana cara me-resetnya?**
+Hapus file konfigurasi keamanan lalu *restart container*:
 ```bash
 cd /root/eka_dashboard
 sudo rm data/security_config.json
 sudo docker compose restart
 ```
-Buka kembali dashboard di *browser*, sistem akan meminta Anda membuat password baru.
+Buka kembali dashboard, Anda akan diminta membuat *password* baru.
+
+**4. Error "Permission denied" saat menjalankan script `install.sh`.**
+Anda membutuhkan hak eksekusi. Ketik perintah `chmod +x install.sh` lalu jalankan kembali menggunakan `sudo bash install.sh`.
+
+**5. Error "docker-compose: command not found".**
+Pada versi Docker terbaru, gunakan perintah `docker compose` (menggunakan spasi, tanpa tanda hubung). Pastikan plugin Docker Compose sudah terpasang di sistem.
+
+**6. Error "port is already allocated" saat proses instalasi (selain CasaOS).**
+Artinya port 80 sedang dipakai oleh aplikasi lain (seperti Apache atau Nginx bawaan). Matikan aplikasi tersebut dengan `sudo systemctl stop apache2` atau `sudo systemctl stop nginx`, atau ganti port Eka Dashboard (lihat poin 2).
+
+**7. Dashboard tidak bisa dibuka (timeout) dari PC / HP lain.**
+Pastikan perangkat terhubung di jaringan (WiFi/LAN) yang sama dengan server. Pastikan juga IP Address yang dimasukkan benar. Jika menggunakan Ubuntu/Debian, pastikan *firewall* tidak memblokir port 80 dengan menjalankan `sudo ufw allow 80`.
+
+**8. Error "unzip: command not found" saat mencoba mengekstrak file installer.**
+Sistem Anda belum memiliki aplikasi unzip. Instal terlebih dahulu dengan mengetik `sudo apt-get update && sudo apt-get install -y unzip`.
+
+**9. Tampilan Dashboard *blank* putih atau berantakan.**
+Masalah ini umumnya disebabkan oleh *cache* browser yang nyangkut. Tekan tombol **Ctrl + F5** (di Windows) atau **Cmd + Shift + R** (di Mac) pada halaman dashboard untuk melakukan *Hard Reload*.
+
+**10. Muncul pesan error "502 Bad Gateway".**
+Artinya *container* web server sudah berjalan, namun aplikasi di dalamnya masih proses *booting* atau mengalami *crash*. Tunggu sekitar 10-15 detik dan *refresh* halaman. Jika masih error, cek log sistem.
+
+**11. Bagaimana cara melihat pesan error lengkap (Log Sistem)?**
+Masuk ke direktori instalasi (`cd /root/eka_dashboard`) dan ketik `sudo docker compose logs -f`. Di situ Anda bisa melihat aktivitas sistem atau peringatan error secara *real-time*. Tekan Ctrl+C untuk keluar.
+
+**12. Bagaimana cara mematikan sementara (stop) Eka Dashboard?**
+Masuk ke direktori instalasi, lalu eksekusi perintah `sudo docker compose down`. Untuk menyalakannya kembali, jalankan `sudo docker compose up -d`.
+
+**13. Bagaimana cara memperbarui (Update) Eka Dashboard ke versi terbaru?**
+Jika Anda menginstal menggunakan metode Git Clone, ketik perintah berikut di direktori instalasi:
+```bash
+git pull
+sudo docker compose up -d --build
+```
+Sistem akan otomatis mengunduh kode terbaru dan melakukan *build* ulang tanpa menghilangkan data pengaturan.
+
+**14. Dashboard berjalan sangat lambat atau sering macet.**
+Hal ini bisa terjadi jika memori (RAM) server penuh. Gunakan perintah `htop` untuk mengecek status penggunaan CPU dan RAM. Jika RAM sangat minim (< 1GB), disarankan untuk menambahkan *Swap Memory* di Linux Anda minimal 1GB - 2GB.
+
+**15. Error "permission denied while trying to connect to the Docker daemon socket".**
+Anda tidak memiliki izin akses ke layanan Docker. Pastikan Anda menambahkan awalan `sudo` di setiap perintah docker, atau masukkan user Anda ke grup docker dengan perintah `sudo usermod -aG docker $USER` lalu relogin.
