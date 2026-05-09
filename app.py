@@ -5143,11 +5143,7 @@ def reload_nginx():
     except Exception as e:
         return jsonify({'success': False, 'output': str(e)})
 
-@app.route('/storage')
-@login_required
-def storage_page():
-    """Halaman Storage Monitor"""
-    return render_template('storage.html')
+
 
 @app.route('/api/storage/info')
 @login_required
