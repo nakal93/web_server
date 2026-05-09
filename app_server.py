@@ -3695,6 +3695,7 @@ def install_worker(app_id, config, username):
         
         # Docker Client
         try:
+            client = docker.from_env()
             old = client.containers.get(name)
             if old:
                 socketio.emit('install_log', {'app_id': app_id, 'message': "Menghapus container lama...", 'type': 'warning'})

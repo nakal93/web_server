@@ -1,7 +1,7 @@
 import psutil
 import platform
 import socket
-from flask import Flask, jsonify, render_template, request, Response, session, redirect, url_for, stream_with_context
+from flask import Flask, jsonify, render_template, request, Response, session, redirect, url_for, stream_with_context, send_file
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
 from functools import wraps
