@@ -173,6 +173,9 @@ fi
 
 echo -e "${BLUE}[INFO] Membangun dan Menjalankan Dashboard...${NC}"
 
+# Hapus paksa container lama jika ada konflik nama yang tidak terdeteksi docker-compose down
+docker rm -f eka_dashboard 2>/dev/null || true
+
 $COMPOSE_CMD down 2>/dev/null
 $COMPOSE_CMD up --build -d
 
