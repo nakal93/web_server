@@ -15,7 +15,6 @@ import json
 from datetime import datetime
 import requests
 import threading
-import license_manager
 import eventlet
 import sqlite3
 import docker # Ensure docker is imported
@@ -456,54 +455,6 @@ def requires_permission(feature, level='any'):
         return decorated_function
     return decorator
 
-# --- LICENSE MIDDLEWARE ---
-@app.before_request
-def check_license_activation():
-    # 1. Allow Static Files
-    if request.path.startswith('/static'):
-        return None
-
-    # 2. Setup & Activation APIs Whitelist
-    whitelist = ['/activate', '/api/activate', '/setup-admin', '/api/setup-admin']
-    if request.path in whitelist:
-        return None
-
-    # 3. License Check Bypassed
-    # We bypass this logic
-    pass
-        
-    # 4. Setup Wizard Check (Default Password)
-    # Check if we are running with insecure default credentials
-    config = load_security_config()
-    default_hash = hashlib.sha256('admin'.encode()).hexdigest()
-    
-    if config['password_hash'] == default_hash:
-        # Force setup
-        if request.path.startswith('/api'):
-             return jsonify({'error': 'Setup required', 'redirect': '/setup-admin'}), 403
-        return redirect('/setup-admin')
-            
-@app.route('/activate')
-def activation_page():
-    if license_manager.is_activated():
-        return redirect('/')
-    return render_template('activation.html')
-
-@app.route('/api/activate', methods=['POST'])
-def activate_api():
-    data = request.json
-    key = data.get('key', '')
-    if license_manager.activate_license(key):
-        # Check if password is still default 'admin'
-        config = load_security_config()
-        default_hash = hashlib.sha256('admin'.encode()).hexdigest()
-        
-        if config['password_hash'] == default_hash:
-             session['setup_mode'] = True
-             return jsonify({'success': True, 'redirect': '/setup-admin'})
-             
-        return jsonify({'success': True, 'redirect': '/'})
-    return jsonify({'success': False, 'error': 'Invalid License Key'}), 400
 # --------------------------
 
 

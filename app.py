@@ -15,12 +15,10 @@ import json
 from datetime import datetime
 import requests
 import threading
-import license_manager
 import eventlet
 import sqlite3
 import docker # Ensure docker is imported
 # LICENSE IMPORTS
-from utils.license import verify_license, get_hwid
 try:
    import docker as docker_sdk # Alias for compatibility if needed
 except ImportError:
@@ -107,55 +105,6 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(24).hex())
 app.config['UPLOAD_FOLDER'] = DATA_DIR
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500MB Limit
 
-# ============ LICENSING MIDDLEWARE ============
-def check_activation():
-    """Checks if a valid license exists. Updates global IS_ACTIVATED state."""
-    global IS_ACTIVATED
-    IS_ACTIVATED = True
-    return True, "Bypassed"
-
-# Initial Check
-check_activation()
-
-@app.before_request
-def license_check():
-    # Allow static resources to load (css, js, images)
-    if request.path.startswith('/static'):
-        return None
-        
-    # Allow activation page and API
-    if request.path.startswith('/activate') or request.path.startswith('/api/activate'):
-        return None
-        
-    # Allow update check endpoint if necessary (optional)
-        
-    # Block everything else if not activated
-    if not IS_ACTIVATED:
-        # Retry check (maybe file was just added)
-        valid, _ = check_activation()
-        if not valid:
-            return redirect('/activate')
-
-@app.route('/activate', methods=['GET', 'POST'])
-def activate_page():
-    hwid = get_hwid()
-    error = None
-    
-    if request.method == 'POST':
-        key = request.form.get('license_key') or request.json.get('license_key')
-        valid, msg = verify_license(hwid, key)
-        
-        if valid:
-            # Save License
-            with open(LICENSE_FILE, 'w') as f:
-                f.write(key)
-            global IS_ACTIVATED
-            IS_ACTIVATED = True
-            return redirect('/')
-        else:
-            error = msg
-            
-    return render_template('activation.html', hwid=hwid, error=error)
 # ==============================================
 CORS(app, supports_credentials=True)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
@@ -519,54 +468,6 @@ def requires_permission(feature, level='any'):
         return decorated_function
     return decorator
 
-# --- LICENSE MIDDLEWARE ---
-@app.before_request
-def check_license_activation():
-    # 1. Allow Static Files
-    if request.path.startswith('/static'):
-        return None
-
-    # 2. Setup & Activation APIs Whitelist
-    whitelist = ['/activate', '/api/activate', '/setup-admin', '/api/setup-admin']
-    if request.path in whitelist:
-        return None
-
-    # 3. License Check Bypassed
-    # We bypass this logic
-    pass
-        
-    # 4. Setup Wizard Check (Default Password)
-    # Check if we are running with insecure default credentials
-    config = load_security_config()
-    default_hash = hashlib.sha256('admin'.encode()).hexdigest()
-    
-    if config['password_hash'] == default_hash:
-        # Force setup
-        if request.path.startswith('/api'):
-             return jsonify({'error': 'Setup required', 'redirect': '/setup-admin'}), 403
-        return redirect('/setup-admin')
-            
-@app.route('/activate')
-def activation_page():
-    if license_manager.is_activated():
-        return redirect('/')
-    return render_template('activation.html')
-
-@app.route('/api/activate', methods=['POST'])
-def activate_api():
-    data = request.json
-    key = data.get('key', '')
-    if license_manager.activate_license(key):
-        # Check if password is still default 'admin'
-        config = load_security_config()
-        default_hash = hashlib.sha256('admin'.encode()).hexdigest()
-        
-        if config['password_hash'] == default_hash:
-             session['setup_mode'] = True
-             return jsonify({'success': True, 'redirect': '/setup-admin'})
-             
-        return jsonify({'success': True, 'redirect': '/'})
-    return jsonify({'success': False, 'error': 'Invalid License Key'}), 400
 # --------------------------
 
 
