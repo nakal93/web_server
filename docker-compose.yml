@@ -5,8 +5,8 @@ services:
     container_name: eka_dashboard
     restart: unless-stopped
     # Use standard bridge mode with port mapping to enforce Port 80
-    ports:
-      - "80:5000"
+    #ports:
+    #  - "80:5000"
     pid: host # Essential for Process List
     privileged: true # Essential for low-level hardware access
     volumes:
