@@ -688,19 +688,22 @@ def stats():
         avg_watts = 0
         kwh_used = 0
 
-    # Temperature
-    temps = psutil.sensors_temperatures()
+    # Temperature (Linux only)
     cpu_temp = 0
-    if temps:
-        # Common keys for arm/linux
-        for name in ['cpu_thermal', 'soc_thermal', 'coretemp', 'thermal_zone0']:
-             if name in temps:
-                 cpu_temp = temps[name][0].current
-                 break
-        # Fallback
-        if cpu_temp == 0 and len(temps) > 0:
-             first_key = list(temps.keys())[0]
-             cpu_temp = temps[first_key][0].current
+    try:
+        temps = psutil.sensors_temperatures() if hasattr(psutil, 'sensors_temperatures') else {}
+        if temps:
+            # Common keys for arm/linux
+            for name in ['cpu_thermal', 'soc_thermal', 'coretemp', 'thermal_zone0']:
+                 if name in temps:
+                     cpu_temp = temps[name][0].current
+                     break
+            # Fallback
+            if cpu_temp == 0 and len(temps) > 0:
+                 first_key = list(temps.keys())[0]
+                 cpu_temp = temps[first_key][0].current
+    except Exception:
+        cpu_temp = 0
 
     return jsonify({
         "cpu": {
@@ -5551,5 +5554,5 @@ def web_monitor_backup():
 
 
 if __name__ == '__main__':
-    print("Starting Development Server on http://localhost:5000")
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+    print("Starting Development Server on http://localhost:5001")
+    socketio.run(app, debug=True, host='0.0.0.0', port=5001)
